@@ -1,0 +1,102 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Recomendador de Apps</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <h1>🧠 Recomendador de Apps de Control Parental</h1>
+  <form id="form">
+    <label>Edad del niño:</label>
+    <input type="number" id="edad" required><br><br>
+    <label>Selecciona las características deseadas:</label><br>
+    <input type="checkbox" value="Restricción de pantalla"> Restricción de pantalla<br>
+    <input type="checkbox" value="Monitoreo de redes sociales"> Monitoreo de redes sociales<br>
+    <input type="checkbox" value="Bloqueo de apps"> Bloqueo de apps<br>
+    <input type="checkbox" value="Supervisión de llamadas y mensajes"> Supervisión de llamadas y mensajes<br>
+    <input type="checkbox" value="Gestión de tiempo de pantalla"> Gestión de tiempo de pantalla<br>
+    <input type="checkbox" value="Geolocalización"> Geolocalización<br>
+    <input type="checkbox" value="Historial de navegación"> Historial de navegación<br>
+    <input type="checkbox" value="Filtrado de contenido web"> Filtrado de contenido web<br>
+    <input type="checkbox" value="Informes de actividad"> Informes de actividad<br>
+    <input type="checkbox" value="Control remoto"> Control remoto<br><br>
+    <button type="submit" class="btn">Recomendar App</button>
+  </form>
+
+  <h2>Ranking de Aplicaciones</h2>
+  <table id="tabla">
+    <thead>
+      <tr>
+        <th>App</th>
+        <th>Edad mínima</th>
+        <th>Coincidencias</th>
+        <th>Ventajas</th>
+        <th>Desventajas</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <h2>Otras recomendaciones</h2>
+  <table id="otrasTabla">
+    <thead>
+      <tr>
+        <th>App</th>
+        <th>Funciones</th>
+        <th>Link</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+
+  <script>
+    document.getElementById("form").addEventListener("submit", e => {
+      e.preventDefault();
+      const edad = parseInt(document.getElementById("edad").value);
+      const seleccionadas = Array.from(document.querySelectorAll("input[type=checkbox]:checked"))
+                                .map(cb => cb.value);
+
+      fetch("http://localhost:8000/recomendar", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ edad, seleccionadas })
+      })
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.querySelector("#tabla tbody");
+        tbody.innerHTML = "";
+        data.ranking.forEach(app => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${app.nombre}</td>
+            <td>${app.edadMin}</td>
+            <td>${app.coincidencias}</td>
+            <td>${app.ventajas}</td>
+            <td>${app.desventajas}</td>
+            <td><a href="${app.link}" target="_blank">Descargar</a></td>
+          `;
+          tbody.appendChild(row);
+        });
+      });
+    });
+
+    // Cargar otras recomendaciones
+    fetch("http://localhost:8000/otras")
+      .then(res => res.json())
+      .then(data => {
+        const tbody = document.querySelector("#otrasTabla tbody");
+        data.lista.forEach(app => {
+          const row = document.createElement("tr");
+          row.innerHTML = `
+            <td>${app.nombre}</td>
+            <td>${app.funciones.join(", ")}</td>
+            <td><a href="${app.link}" target="_blank">Descargar</a></td>
+          `;
+          tbody.appendChild(row);
+        });
+      });
+  </script>
+</body>
+</html>
